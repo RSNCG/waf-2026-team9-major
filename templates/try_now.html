@@ -2,8 +2,22 @@
 
 {% block content %}
 <style>
-    /* Clean, light app background for realistic feel */
-    .app-theme-bg { background-color: #f1f5f9; }
+    :root {
+        --cyber-bg: #020617;
+        --cyber-panel: #0b1226;
+        --cyber-line: #1e293b;
+        --cyber-blue: #22d3ee;
+        --cyber-green: #34d399;
+        --cyber-red: #f87171;
+    }
+
+    /* Cyber security themed background */
+    .app-theme-bg {
+        background:
+            radial-gradient(circle at 15% 20%, rgba(34, 211, 238, 0.15), transparent 35%),
+            radial-gradient(circle at 80% 10%, rgba(52, 211, 153, 0.14), transparent 28%),
+            linear-gradient(180deg, #020617 0%, #0f172a 100%);
+    }
     
     /* Hide standard page footer to maximize app feel */
     footer { display: none !important; }
@@ -13,16 +27,38 @@
     details > summary::-webkit-details-marker { display: none; }
 
     /* Pipeline Animation Styles */
-    .pipe-node { transition: all 0.4s ease; border-color: #cbd5e1; color: #94a3b8; }
-    .pipe-line { transition: all 0.4s ease; background-color: #e2e8f0; }
+    .pipe-node { transition: all 0.4s ease; border-color: #334155; color: #64748b; }
+    .pipe-line { transition: all 0.4s ease; background-color: #1e293b; }
     
-    .node-active { border-color: #0ea5e9; color: #0ea5e9; box-shadow: 0 0 12px rgba(14, 165, 233, 0.2); }
-    .node-safe { border-color: #10b981; color: #10b981; box-shadow: 0 0 12px rgba(16, 185, 129, 0.2); }
-    .node-blocked { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 12px rgba(239, 68, 68, 0.2); }
+    .node-active { border-color: var(--cyber-blue); color: var(--cyber-blue); box-shadow: 0 0 14px rgba(34, 211, 238, 0.35); }
+    .node-safe { border-color: var(--cyber-green); color: var(--cyber-green); box-shadow: 0 0 14px rgba(52, 211, 153, 0.35); }
+    .node-blocked { border-color: var(--cyber-red); color: var(--cyber-red); box-shadow: 0 0 14px rgba(248, 113, 113, 0.35); }
     
-    .pipe-line.active { background-color: #0ea5e9; }
-    .pipe-line.safe { background-color: #10b981; }
-    .pipe-line.blocked { background-color: #ef4444; }
+    .pipe-line.active { background-color: var(--cyber-blue); }
+    .pipe-line.safe { background-color: var(--cyber-green); }
+    .pipe-line.blocked { background-color: var(--cyber-red); }
+
+    .cyber-panel {
+        border: 1px solid var(--cyber-line);
+        box-shadow: 0 16px 38px rgba(2, 6, 23, 0.42);
+    }
+
+    .cyber-report {
+        border: 2px solid #cbd5e1;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .cyber-impact,
+    .cyber-metrics,
+    .cyber-lime {
+        border: 2px solid #cbd5e1;
+        border-radius: 10px;
+    }
+
+    .cyber-strong {
+        font-weight: 800;
+        letter-spacing: 0.02em;
+    }
 </style>
 
 <!-- Full Viewport Background -->
@@ -31,7 +67,7 @@
 <div class="max-w-4xl mx-auto pb-12 relative min-h-[calc(100vh-6rem)] mt-6">
     
     <!-- FULL PAGE BROWSER SHELL -->
-    <div class="bg-white rounded-xl overflow-hidden shadow-2xl shadow-slate-300 flex flex-col min-h-[650px] border border-slate-300">
+    <div class="bg-white rounded-xl overflow-hidden shadow-2xl shadow-slate-300 flex flex-col min-h-[650px] border border-slate-300 cyber-panel">
         
         <!-- Browser Header Controls -->
         <div class="bg-slate-100 border-b border-slate-200 py-2 px-4 flex items-center justify-between flex-shrink-0">
@@ -344,7 +380,7 @@
                 </div>
 
                 <!-- COLLAPSIBLE DETAILED ANALYSIS -->
-                <div id="detailed-analysis-section" class="hidden bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden fade-in mt-4">
+                <div id="detailed-analysis-section" class="hidden bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden fade-in mt-4 cyber-report">
                     <div class="bg-slate-900 px-6 py-3 border-b border-slate-800 flex items-center">
                         <h4 class="text-white font-bold text-sm tracking-wide"><i class="fas fa-microchip mr-2 text-brand-400"></i> SmartGuard Academic Analysis Report</h4>
                     </div>
@@ -353,21 +389,21 @@
                         <!-- Security Impact -->
                         <div>
                             <h6 class="text-xs font-bold text-slate-800 mb-2 uppercase tracking-wide flex items-center"><i class="fas fa-radiation text-slate-400 mr-2"></i> Threat Impact Assessment</h6>
-                            <p id="det-impact" class="text-sm text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-200 leading-relaxed"></p>
+                            <p id="det-impact" class="text-sm text-slate-700 bg-slate-50 p-4 leading-relaxed cyber-impact cyber-strong"></p>
                         </div>
 
                         <div class="grid md:grid-cols-2 gap-6">
                             <!-- AI Reasoning -->
                             <div>
                                 <h6 class="text-xs font-bold text-slate-800 mb-2 uppercase tracking-wide flex items-center"><i class="fas fa-brain text-slate-400 mr-2"></i> Explainable AI Signals (LIME)</h6>
-                                <ul id="det-lime" class="space-y-2 text-sm text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono min-h-[100px]">
+                                <ul id="det-lime" class="space-y-2 text-sm text-slate-700 bg-slate-50 p-4 font-mono min-h-[100px] cyber-lime">
                                 </ul>
                             </div>
                             
                             <!-- Request Metrics -->
                             <div>
                                 <h6 class="text-xs font-bold text-slate-800 mb-2 uppercase tracking-wide flex items-center"><i class="fas fa-chart-pie text-slate-400 mr-2"></i> Pipeline Metrics</h6>
-                                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-sm space-y-3 min-h-[100px]">
+                                <div class="bg-slate-50 p-4 font-mono text-sm space-y-3 min-h-[100px] cyber-metrics">
                                     <div class="flex justify-between border-b border-slate-200 pb-2">
                                         <span class="text-slate-500">ML Confidence:</span> <span id="det-confidence" class="font-bold text-slate-800">-</span>
                                     </div>
@@ -529,6 +565,23 @@
                 lastData.features.length = runCount;
                 lastData.features.special_chars = blockedCount;
             }
+
+            // Persist one summarized rate-limit event so dashboard attack vectors show it.
+            try {
+                await fetch('/log_simulation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action_type: 'Extension Traffic Test',
+                        payload: `traffic=${trafficType}; scenario=${scenario}; count=${runCount}; delay=${delay}`,
+                        result: 'BLOCKED',
+                        confidence: 0.99,
+                        detected_type: 'Rate Limit'
+                    })
+                });
+            } catch (e) {
+                console.warn('Simulation log persistence failed:', e);
+            }
         }
 
         if (!lastData) {
@@ -537,6 +590,7 @@
             return;
         }
 
+        currentRawRequest = `EXTENSION TRAFFIC SIMULATION\nTraffic Type: ${trafficType}\nScenario: ${scenario}\nRequests Sent: ${runCount}\nDelay: ${delay}ms\nRandomize UA: ${randomUA ? 'ON' : 'OFF'}\nBlocked Responses: ${blockedCount}`;
         currentRawRequest = `DEMO-ONLY EXTENSION SIMULATION\nTraffic Type: ${trafficType}\nScenario: ${scenario}\nRequests Sent: ${runCount}\nDelay: ${delay}ms\nRandomize UA: ${randomUA ? 'ON' : 'OFF'}\nBlocked Responses: ${blockedCount}`;
         currentRawRequest = `DEMO-ONLY EXTENSION SIMULATION\nTraffic Type: ${trafficType}\nScenario: ${scenario}\nIntensity: ${intensity}\nRequests Sent: ${runCount}\nDelay: ${delay}ms\nRandomize UA: ${randomUA ? 'ON' : 'OFF'}\nBlocked Responses: ${blockedCount}`;
         window.updateAnalysisUI_Result(lastData, seed.action);

@@ -359,6 +359,31 @@ def analyze():
     }
     return jsonify(response)
 
+@app.route('/log_simulation', methods=['POST'])
+def log_simulation():
+    """Store demo-only synthetic events (e.g., rate-limit) in dashboard logs."""
+    if 'user_id' not in session:
+        return jsonify({'status': 'ignored', 'message': 'Login required for log persistence.'}), 200
+
+    data = request.get_json(silent=True) or {}
+    action_type = data.get('action_type', 'Extension Simulation')
+    payload = data.get('payload', 'demo extension simulation')
+    result = data.get('result', 'BLOCKED')
+    confidence = float(data.get('confidence', 0.99))
+    detected_type = data.get('detected_type', 'Rate Limit')
+
+    try:
+        db = get_db()
+        db.execute(
+            'INSERT INTO logs (user_id, action_type, payload, result, confidence, detected_type) VALUES (?, ?, ?, ?, ?, ?)',
+            (session['user_id'], action_type, payload, result, confidence, detected_type)
+        )
+        db.commit()
+        db.close()
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session: return redirect(url_for('login'))

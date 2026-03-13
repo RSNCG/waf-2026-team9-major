@@ -498,7 +498,6 @@
                     ['browser', 'edge', 'ml', 'decision'].forEach(n => document.getElementById(`pipe-${n}`).classList.add('node-safe'));
                 } else {
                     document.getElementById('line-4').classList.add('blocked');
-                    document.getElementById('block-x').classList.remove('hidden');
                     document.getElementById('pipe-app').classList.add('node-blocked');
                     ['edge', 'ml', 'decision'].forEach(n => document.getElementById(`pipe-${n}`).classList.add('node-blocked'));
                 }

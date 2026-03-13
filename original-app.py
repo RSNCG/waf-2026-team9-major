@@ -60,9 +60,9 @@ try:
         class_names=lime_params['class_names'],
         mode=lime_params['mode']
     )
-    print("✅ ML Models and Explainer loaded successfully.")
+    print(" ML Models and Explainer loaded successfully.")
 except Exception as e:
-    print(f"⚠️ Error loading models: {e}")
+    print(f" Error loading models: {e}")
     clf, scaler, explainer = None, None, None
 
 def get_harm_explanation(detected_type):

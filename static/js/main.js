@@ -1,30 +1,9 @@
-// --- Mini Browser UI Logic ---
+/**
+ * SmartGuard Global Logic
+ * Handles form submissions and global UI state
+ */
 
-// 1. Update URL bar based on active tab
-function updateUrl(suffix) {
-    const el = document.getElementById('url-suffix');
-    if (el) el.innerText = suffix;
-    
-    // Clear feedback
-    const fb = document.getElementById('browser-feedback');
-    if (fb) fb.classList.add('d-none');
-}
-
-// 2. Helper to set payloads from "Quick Scenarios" buttons
-function setPayload(mainInputId, mainText, secText = null) {
-    const mainEl = document.getElementById(mainInputId);
-    if (mainEl) mainEl.value = mainText;
-    
-    // For Login scenario where we have a password field
-    if (secText) {
-        const passEl = document.getElementById('login-pass');
-        if (passEl) passEl.value = secText;
-    }
-}
-
-// 3. Handle Form Submission (AJAX to backend)
 document.addEventListener('DOMContentLoaded', function() {
-    
     const forms = document.querySelectorAll('.demo-form');
     
     forms.forEach(form => {
@@ -38,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (actionType === 'Login') {
                 const u = this.querySelector('#login-user').value;
                 const p = this.querySelector('#login-pass').value;
-                payload = u + " " + p; // Concatenate for analysis
+                payload = u + " " + p; 
             } else if (actionType === 'Search') {
                 payload = this.querySelector('#search-query').value;
             } else if (actionType === 'Comment') {
@@ -47,8 +26,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!payload.trim()) return;
 
-            // Update UI State -> Analyzing
-            updateAnalysisUI_Loading();
+            // Trigger Loading UI (Live Demo version or Fallback)
+            if (window.updateAnalysisUI_Loading) {
+                window.updateAnalysisUI_Loading();
+            } else {
+                updateStandardLoadingUI();
+            }
 
             // Send to Backend
             fetch('/analyze', {
@@ -58,108 +41,110 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                updateAnalysisUI_Result(data, actionType);
+                // Update Result UI (Live Demo version or Fallback)
+                if (window.updateAnalysisUI_Result) {
+                    window.updateAnalysisUI_Result(data, actionType);
+                } else {
+                    updateStandardResultUI(data, actionType);
+                }
+                
+                // Final Browser Feedback
                 updateBrowserFeedback(data, actionType);
             })
             .catch(err => {
-                console.error(err);
+                console.error("SmartGuard Error:", err);
+                if (window.resetSimulator) window.resetSimulator();
                 alert("Error connecting to SmartGuard backend.");
             });
         });
     });
 });
 
-function updateAnalysisUI_Loading() {
+// --- Standard UI Fallbacks (Used if not on the Try Now page) ---
+
+function updateStandardLoadingUI() {
     const status = document.getElementById('panel-status');
     const decision = document.getElementById('decision-text');
-    
     if(status) {
         status.innerText = "ANALYZING...";
         status.className = "badge bg-warning animate-pulse";
     }
     if(decision) {
         decision.innerText = "...";
-        decision.className = "display-3 fw-bold mb-0 text-white";
     }
 }
 
-function updateAnalysisUI_Result(data, action) {
-    // 1. Panel Header
+function updateStandardResultUI(data, action) {
     const status = document.getElementById('panel-status');
-    status.innerText = "COMPLETE";
-    status.className = "badge bg-success";
+    if(status) {
+        status.innerText = "COMPLETE";
+        status.className = "badge bg-success";
+    }
 
-    // 2. Decision Big Text
     const decision = document.getElementById('decision-text');
     const reason = document.getElementById('decision-reason');
     
-    decision.innerText = data.decision;
-    if (data.decision === 'ACCEPTED') {
-        decision.className = "display-3 fw-bold mb-0 text-success";
-        reason.innerText = "Validation Passed. Request Safe.";
-    } else {
-        decision.className = "display-3 fw-bold mb-0 text-danger";
-        reason.innerText = "Validation Failed. Threat Blocked.";
+    if(decision) {
+        decision.innerText = data.decision;
+        decision.className = data.decision === 'ACCEPTED' ? "text-success" : "text-danger";
+    }
+    if(reason) {
+        reason.innerText = data.decision === 'ACCEPTED' ? "Request Safe." : "Threat Blocked.";
     }
 
-    // 3. Details
-    document.getElementById('res-action').innerText = action;
-    document.getElementById('res-len').innerText = data.features.length + " chars";
-    document.getElementById('res-spec').innerText = data.features.special_chars;
-    
-    const riskEl = document.getElementById('res-risk');
-    riskEl.innerText = data.risk_level;
-    
-    // Updated Logic for Critical/High levels
-    if (data.risk_level === 'Critical' || data.risk_level === 'High') {
-        riskEl.className = 'fw-bold text-danger';
-    } else if (data.risk_level === 'Medium') {
-        riskEl.className = 'fw-bold text-warning';
-    } else {
-        riskEl.className = 'fw-bold text-success';
-    }
-    
-    document.getElementById('res-type').innerText = data.detected_type;
-    document.getElementById('res-conf').innerText = data.confidence;
+    // Update basic metric fields if they exist
+    const fields = {
+        'res-action': action,
+        'res-type': data.detected_type,
+        'res-conf': data.confidence,
+        'harm-text': data.harm_text
+    };
 
-    // 4. Harm Explanation (Manual KB)
-    const harmEl = document.getElementById('harm-text');
-    if (data.harm_text) {
-        harmEl.innerText = data.harm_text;
-    } else {
-        harmEl.innerText = "Analysis details unavailable.";
-    }
-
-    // 5. LIME Explanation
-    const limeList = document.getElementById('lime-features');
-    limeList.innerHTML = ""; // clear
-    
-    if (data.explanation && data.explanation.length > 0) {
-        data.explanation.forEach(item => {
-            const featureName = item[0];
-            const weight = item[1];
-            const colorClass = weight > 0 ? 'text-danger' : 'text-success';
-            const icon = weight > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-            
-            const li = document.createElement('li');
-            li.innerHTML = `<i class="fas ${icon} ${colorClass} me-2"></i> ${featureName} <span class="text-muted small">(${weight.toFixed(3)})</span>`;
-            limeList.appendChild(li);
-        });
-    } else {
-        limeList.innerHTML = "<li class='text-muted'>No significant features identified.</li>";
+    for (let id in fields) {
+        const el = document.getElementById(id);
+        if(el) el.innerText = fields[id];
     }
 }
 
 function updateBrowserFeedback(data, action) {
     const fb = document.getElementById('browser-feedback');
-    fb.classList.remove('d-none');
+    if (!fb) return;
     
+    fb.classList.remove('d-none');
     if (data.decision === 'ACCEPTED') {
         fb.className = "mt-4 text-center text-success fw-bold fade-in p-3 bg-success bg-opacity-10 rounded border border-success";
-        // Simple, clear acceptance message
         fb.innerHTML = "<i class='fas fa-check-circle me-2'></i>Validation Passed. Request Safe.";
     } else {
         fb.className = "mt-4 text-center text-danger fw-bold fade-in p-3 bg-danger bg-opacity-10 rounded border border-danger";
         fb.innerHTML = "<i class='fas fa-shield-virus me-2'></i>REQUEST BLOCKED: Threat Signature Detected.";
     }
+}
+
+// Helper to set payloads from "Quick Scenarios" buttons
+function setPayload(mainInputId, mainText, secText = null) {
+    const mainEl = document.getElementById(mainInputId);
+    if (mainEl) mainEl.value = mainText;
+    if (secText) {
+        const passEl = document.getElementById('login-pass');
+        if (passEl) passEl.value = secText;
+    }
+}
+
+// Utility: CSV Export for Dashboard
+function exportTableToCSV(filename) {
+    const csv = [];
+    const rows = document.querySelectorAll("table tr");
+    for (let i = 0; i < rows.length; i++) {
+        const row = [], cols = rows[i].querySelectorAll("td, th");
+        for (let j = 0; j < cols.length; j++) 
+            row.push('"' + cols[j].innerText.replace(/"/g, '""') + '"');
+        csv.push(row.join(","));
+    }
+    const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+    const downloadLink = document.createElement("a");
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
 }

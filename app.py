@@ -222,7 +222,18 @@ def try_now(): return render_template('try_now.html')
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    if not clf or not scaler: return jsonify({'error': 'Models not loaded'}), 500
+    # Defensive check: return structured JSON error instead of crashing if models missing
+    if not clf or not scaler: 
+        return jsonify({
+            'error': 'Models not loaded. Ensure attack_classifier.pkl and feature_extractor.pkl are in the models/ directory.',
+            'decision': 'ERROR',
+            'detected_type': 'System Error',
+            'confidence': '0.00%',
+            'risk_level': 'Unknown',
+            'explanation': [],
+            'harm_text': 'Analysis unavailable. ML models failed to load.',
+            'features': {'length': 0, 'special_chars': 0, 'sql_keywords': 0}
+        }), 500
 
     data = request.json
     payload = data.get('payload', '')

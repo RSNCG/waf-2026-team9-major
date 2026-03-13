@@ -1,211 +1,509 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Changed fixed height to min-height and added padding for better scrolling -->
-<div class="min-h-screen grid lg:grid-cols-2 gap-8 pb-12">
+<style>
+    /* Clean, light app background for realistic feel */
+    .app-theme-bg { background-color: #f1f5f9; }
     
-    <!-- LEFT SIDE: Mini Browser -->
-    <div class="flex flex-col h-full fade-in" style="animation-delay: 0.1s;">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col h-full overflow-hidden min-h-[600px]">
-            <!-- Browser Header -->
-            <div class="bg-slate-50 border-b border-slate-200 p-3 flex items-center space-x-4 flex-shrink-0">
-                <div class="flex space-x-2">
-                    <span class="w-3 h-3 rounded-full bg-red-400"></span>
-                    <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
-                    <span class="w-3 h-3 rounded-full bg-green-400"></span>
+    /* Hide standard page footer to maximize app feel */
+    footer { display: none !important; }
+    main { padding-bottom: 2rem; }
+    
+    /* Details marker hidden for custom accordion styling */
+    details > summary::-webkit-details-marker { display: none; }
+
+    /* Pipeline Animation Styles */
+    .pipe-node { transition: all 0.4s ease; border-color: #cbd5e1; color: #94a3b8; }
+    .pipe-line { transition: all 0.4s ease; background-color: #e2e8f0; }
+    
+    .node-active { border-color: #0ea5e9; color: #0ea5e9; box-shadow: 0 0 12px rgba(14, 165, 233, 0.2); }
+    .node-safe { border-color: #10b981; color: #10b981; box-shadow: 0 0 12px rgba(16, 185, 129, 0.2); }
+    .node-blocked { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 12px rgba(239, 68, 68, 0.2); }
+    
+    .pipe-line.active { background-color: #0ea5e9; }
+    .pipe-line.safe { background-color: #10b981; }
+    .pipe-line.blocked { background-color: #ef4444; }
+</style>
+
+<!-- Full Viewport Background -->
+<div class="fixed inset-0 app-theme-bg -z-10 pt-16"></div>
+
+<div class="max-w-4xl mx-auto pb-12 relative min-h-[calc(100vh-6rem)] mt-6">
+    
+    <!-- FULL PAGE BROWSER SHELL -->
+    <div class="bg-white rounded-xl overflow-hidden shadow-2xl shadow-slate-300 flex flex-col min-h-[650px] border border-slate-300">
+        
+        <!-- Browser Header Controls -->
+        <div class="bg-slate-100 border-b border-slate-200 py-2 px-4 flex items-center justify-between flex-shrink-0">
+            <div class="flex space-x-2 w-24">
+                <span class="w-3 h-3 rounded-full bg-red-400 border border-red-500/20"></span>
+                <span class="w-3 h-3 rounded-full bg-yellow-400 border border-yellow-500/20"></span>
+                <span class="w-3 h-3 rounded-full bg-green-400 border border-green-500/20"></span>
+            </div>
+            
+            <!-- URL Bar -->
+            <div class="flex-grow max-w-xl bg-white border border-slate-200 rounded-md px-4 py-1.5 text-sm font-mono flex items-center text-slate-600 justify-center shadow-sm">
+                <i class="fas fa-lock text-slate-400 mr-2 text-xs"></i>
+                <span class="text-slate-400">localhost:5000/</span><span id="url-suffix" class="text-slate-800 font-medium">auth/login</span>
+            </div>
+            
+            <div class="w-24 text-right">
+                <span class="inline-flex items-center px-2 py-1 rounded bg-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-wider border border-slate-300">
+                    <i class="fas fa-network-wired mr-1"></i> Local
+                </span>
+            </div>
+        </div>
+
+        <!-- SmartGuard Edge Gateway Banner (Academic Context) -->
+        <div class="bg-slate-900 text-cyan-400 text-[10px] font-mono py-1.5 px-6 flex justify-between items-center shadow-inner flex-shrink-0">
+            <div class="flex items-center space-x-3">
+                <span class="flex items-center font-bold text-white"><span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span> SmartGuard Simulation Environment</span>
+            </div>
+            <div class="text-slate-400">
+                <i class="fas fa-shield-alt text-brand-500 mr-1"></i> AI powered Firewall For Web Applications
+            </div>
+        </div>
+
+        <!-- Horizontal Inspection Pipeline -->
+        <div class="w-full bg-slate-50 border-b border-slate-200 py-4 flex justify-center items-center flex-shrink-0 shadow-sm z-10">
+            <div class="flex items-center w-full max-w-2xl font-mono text-[9px] text-center tracking-widest uppercase font-bold text-slate-500">
+                <div class="flex flex-col items-center w-20">
+                    <div id="pipe-browser" class="pipe-node w-8 h-8 rounded-full border-2 flex items-center justify-center mb-1.5 bg-white z-10"><i class="fas fa-globe text-xs"></i></div>
+                    <span>Browser</span>
                 </div>
-                <div class="flex-grow bg-white border border-slate-200 rounded-lg px-4 py-1.5 text-sm text-slate-500 font-mono flex items-center shadow-sm">
-                    <i class="fas fa-lock text-green-500 mr-2 text-xs"></i>
-                    https://secure-demo.app/<span id="url-suffix" class="text-slate-800 font-bold ml-1">auth</span>
+                <div id="line-1" class="pipe-line h-0.5 flex-grow -mx-2 z-0"></div>
+                
+                <div class="flex flex-col items-center w-24">
+                    <div id="pipe-edge" class="pipe-node w-8 h-8 rounded-full border-2 flex items-center justify-center mb-1.5 bg-white z-10"><i class="fas fa-server text-xs"></i></div>
+                    <span>Edge Node</span>
+                </div>
+                <div id="line-2" class="pipe-line h-0.5 flex-grow -mx-2 z-0"></div>
+                
+                <div class="flex flex-col items-center w-24">
+                    <div id="pipe-ml" class="pipe-node w-8 h-8 rounded-full border-2 flex items-center justify-center mb-1.5 bg-white z-10"><i class="fas fa-brain text-xs"></i></div>
+                    <span>Analysis</span>
+                </div>
+                <div id="line-3" class="pipe-line h-0.5 flex-grow -mx-2 z-0"></div>
+                
+                <div class="flex flex-col items-center w-24">
+                    <div id="pipe-decision" class="pipe-node w-8 h-8 rounded-full border-2 flex items-center justify-center mb-1.5 bg-white z-10"><i class="fas fa-filter text-xs"></i></div>
+                    <span>Enforcement</span>
+                </div>
+                <div id="line-4" class="pipe-line h-0.5 flex-grow -mx-2 z-0 relative">
+                    <div id="block-x" class="absolute inset-0 flex items-center justify-center text-red-500 hidden"><i class="fas fa-times-circle bg-white rounded-full text-sm shadow-sm"></i></div>
+                </div>
+                
+                <div class="flex flex-col items-center w-20">
+                    <div id="pipe-app" class="pipe-node w-8 h-8 rounded-full border-2 flex items-center justify-center mb-1.5 bg-white z-10"><i class="fas fa-database text-xs"></i></div>
+                    <span>App Server</span>
                 </div>
             </div>
+        </div>
 
-            <!-- Browser Body -->
-            <div class="flex-grow p-6 lg:p-10 bg-white relative overflow-y-auto">
-                
-                <!-- Navigation Tabs -->
-                <div class="mb-8 text-center">
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Validation Modes</p>
-                    <div class="inline-flex justify-center bg-slate-100 p-1 rounded-xl overflow-x-auto max-w-full">
-                        <button class="whitespace-nowrap px-6 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm bg-white text-brand-600" id="btn-tab-login" onclick="switchTab('login')">Login</button>
-                        <button class="whitespace-nowrap px-6 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-slate-700 transition-all" id="btn-tab-search" onclick="switchTab('search')">Search</button>
-                        <button class="whitespace-nowrap px-6 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-slate-700 transition-all" id="btn-tab-comment" onclick="switchTab('comment')">Comment</button>
+        <!-- Main Workspace -->
+        <div class="flex-grow relative bg-white flex flex-col">
+            
+            <!-- ========================================== -->
+            <!-- STATE 1: THE APPLICATION FORMS (view-form) -->
+            <!-- ========================================== -->
+            <div id="view-form" class="w-full max-w-xl mx-auto py-8 px-6 fade-in flex-grow">
+            
+
+                <!-- App Navigation (Updated Labeling) -->
+                <div class="mb-6 text-center">
+                    <div class="inline-flex items-center justify-center bg-slate-50 border border-slate-200 p-1 rounded-lg">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest px-3 border-r border-slate-200 mr-1 hidden sm:block">Protected Endpoint:</span>
+                        <button type="button" class="px-5 py-2 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-brand-600 ring-1 ring-slate-200" id="btn-tab-login" onclick="window.switchTab('login')">Login</button>
+                        <button type="button" class="px-5 py-2 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all bg-transparent" id="btn-tab-search" onclick="window.switchTab('search')">Search</button>
+                        <button type="button" class="px-5 py-2 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all bg-transparent" id="btn-tab-comment" onclick="window.switchTab('comment')">Feedback</button>
                     </div>
                 </div>
 
                 <!-- Forms Container -->
-                <div class="max-w-md mx-auto relative pb-8">
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-slate-200 relative">
                     
                     <!-- Login Form -->
                     <div id="tab-login" class="transition-opacity duration-300">
-                        <div class="text-center mb-8">
-                            <div class="h-16 w-16 bg-brand-100 text-brand-600 rounded-2xl mx-auto flex items-center justify-center mb-4 text-2xl">
-                                <i class="fas fa-user-shield"></i>
-                            </div>
-                            <h3 class="text-xl font-bold text-slate-900">User Authentication</h3>
-                            
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-bold text-slate-800 mb-1">User Authentication</h3>
+                            <p class="text-sm text-slate-500">Access the secure application dashboard</p>
                         </div>
                         <form class="demo-form space-y-4" data-action="Login">
-                            <input type="text" id="login-user" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all" placeholder="Username / Email">
-                            <input type="password" id="login-pass" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all" placeholder="Password">
-                            <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg shadow-brand-500/30 transition-all transform hover:-translate-y-0.5">
-                                Sign In
-                            </button>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Username</label>
+                                <input type="text" id="login-user" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm shadow-sm" placeholder="Enter username">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Password</label>
+                                <input type="password" id="login-pass" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm shadow-sm" placeholder="Enter password">
+                            </div>
+                            <button type="submit" class="w-full py-3 mt-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg shadow-md transition-all">Authenticate Request</button>
                             
-                            <!-- Quick Actions -->
-                            <div class="pt-4">
-                                <p class="text-xs font-bold text-slate-400 text-center uppercase tracking-wider mb-3">Test Scenarios</p>
+                            <!-- Presets -->
+                            <div class="pt-6 mt-4 border-t border-slate-100 text-center">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Firewall Attack Simulation Presets</p>
                                 <div class="flex flex-wrap gap-2 justify-center">
-                                    <button type="button" class="px-3 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition" onclick="setPayload('login-user', 'user_valid', 'pass_secure')">Normal</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-md transition" onclick="setPayload('login-user', 'admin\' OR 1=1 --', 'nopass')">SQL Bypass</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-md transition" onclick="setPayload('login-user', 'admin\' UNION SELECT 1,2--', 'pass')">SQL Union</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-100 rounded-md transition" onclick="setPayload('login-user', '<script>alert(1)</script>', 'pass')">XSS User</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-md transition" onclick="setPayload('login-user', 'admin; cat /etc/passwd', 'pass')">Cmd Inject</button>
+                                    <button type="button" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-md transition border border-slate-200" onclick="window.setPayload('login-user', 'admin_user', 'secure_pass123')">Safe Login</button>
+                                    <button type="button" class="px-3 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-700 font-medium rounded-md transition border border-red-200" onclick="window.setPayload('login-user', 'admin\' OR 1=1 --', 'nopass')">Auth Bypass (SQLi)</button>
+                                    <button type="button" class="px-3 py-1.5 text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 font-medium rounded-md transition border border-orange-200" onclick="window.setPayload('login-user', '<script>alert(1)</script>', 'pass')">Script Payload (XSS)</button>
                                 </div>
                             </div>
                         </form>
                     </div>
 
-                    <!-- Search Form (Hidden by default) -->
+                    <!-- Search Form -->
                     <div id="tab-search" class="hidden">
-                        <div class="text-center mb-10 mt-8">
-                            <h2 class="text-3xl font-bold text-slate-900">Search</h2>
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-bold text-slate-800 mb-1">Database Search</h3>
+                            <p class="text-sm text-slate-500">Query public application records</p>
                         </div>
-                        <form class="demo-form space-y-6" data-action="Search">
-                            <div class="relative">
-                                <input type="text" id="search-query" class="w-full pl-5 pr-12 py-3 rounded-full border border-slate-200 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all" placeholder="Search query...">
-                                <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-blue-500 rounded-full text-white flex items-center justify-center hover:bg-blue-600 transition">
-                                    <i class="fas fa-search text-xs"></i>
-                                </button>
+                        <form class="demo-form space-y-4" data-action="Search">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Search Query Parameter</label>
+                                <input type="text" id="search-query" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm shadow-sm" placeholder="Enter query string...">
                             </div>
-                             <!-- Quick Actions -->
-                             <div class="pt-4">
-                                <p class="text-xs font-bold text-slate-400 text-center uppercase tracking-wider mb-3">Test Scenarios</p>
-                                <div class="flex flex-wrap gap-2 justify-center">
-                                    <button type="button" class="px-3 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition" onclick="setPayload('search-query', 'iPhone 15 Review')">Normal</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-md transition" onclick="setPayload('search-query', '\' UNION SELECT 1, user(), 3 --')">SQL Blind</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-100 rounded-md transition" onclick="setPayload('search-query', '<svg/onload=alert(1)>')">Refl XSS</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-md transition" onclick="setPayload('search-query', '../../../../etc/passwd')">Path Trav</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-md transition" onclick="setPayload('search-query', '| netstat -an')">Cmd Inject</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Comment Form (Hidden) -->
-                    <div id="tab-comment" class="hidden">
-                        <h4 class="text-lg font-bold text-slate-800 mb-4">Submit Feedback</h4>
-                        <form class="demo-form space-y-4" data-action="Comment">
-                            <textarea id="comment-text" rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-slate-800 focus:ring-0 outline-none transition-all bg-slate-50" placeholder="Write a comment..."></textarea>
-                            <button type="submit" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition-all">Post Comment</button>
+                            <button type="submit" class="w-full py-3 mt-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg shadow-md transition-all">Submit Query</button>
                             
-                             <!-- Quick Actions -->
-                             <div class="pt-4">
-                                <p class="text-xs font-bold text-slate-400 text-center uppercase tracking-wider mb-3">Test Scenarios</p>
+                            <!-- Presets -->
+                            <div class="pt-6 mt-4 border-t border-slate-100 text-center">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Firewall Attack Simulation Presets</p>
                                 <div class="flex flex-wrap gap-2 justify-center">
-                                    <button type="button" class="px-3 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition" onclick="setPayload('comment-text', 'Great article! Very informative.')">Normal</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-100 rounded-md transition" onclick="setPayload('comment-text', '<img src=x onerror=alert(1)>')">Stored XSS</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-md transition" onclick="setPayload('comment-text', '<?php system(\'id\'); ?>')">PHP Inj</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-100 rounded-md transition" onclick="setPayload('comment-text', '<a href=\'evil.com\'>Click</a>')">HTML Inj</button>
-                                    <button type="button" class="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-md transition" onclick="setPayload('comment-text', '\'); DROP TABLE posts; --')">SQL Drop</button>
+                                    <button type="button" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-md transition border border-slate-200" onclick="window.setPayload('search-query', 'Quarterly Report 2026')">Safe Query</button>
+                                    <button type="button" class="px-3 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-700 font-medium rounded-md transition border border-red-200" onclick="window.setPayload('search-query', '\' UNION SELECT 1, user(), 3 --')">Blind SQL Injection</button>
+                                    <button type="button" class="px-3 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-700 font-medium rounded-md transition border border-red-200" onclick="window.setPayload('search-query', '../../../../etc/passwd')">Path Traversal</button>
                                 </div>
                             </div>
                         </form>
                     </div>
 
+                    <!-- Comment Form -->
+                    <div id="tab-comment" class="hidden">
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-bold text-slate-800 mb-1">User Feedback</h3>
+                            <p class="text-sm text-slate-500">Submit a comment to the server</p>
+                        </div>
+                        <form class="demo-form space-y-4" data-action="Comment">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Message Payload</label>
+                                <textarea id="comment-text" rows="3" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm shadow-sm" placeholder="Write feedback..."></textarea>
+                            </div>
+                            <button type="submit" class="w-full py-3 mt-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg shadow-md transition-all">Submit Payload</button>
+                            
+                            <!-- Presets -->
+                            <div class="pt-6 mt-4 border-t border-slate-100 text-center">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Firewall Attack Simulation Presets</p>
+                                <div class="flex flex-wrap gap-2 justify-center">
+                                    <button type="button" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-md transition border border-slate-200" onclick="window.setPayload('comment-text', 'The new application UI looks great!')">Safe Text</button>
+                                    <button type="button" class="px-3 py-1.5 text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 font-medium rounded-md transition border border-orange-200" onclick="window.setPayload('comment-text', '<img src=x onerror=alert(1)>')">Stored XSS</button>
+                                    <button type="button" class="px-3 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-700 font-medium rounded-md transition border border-red-200" onclick="window.setPayload('comment-text', '<?php system(\'id\'); ?>')">Command Injection</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-
-                <!-- Feedback Area -->
-                <div id="browser-feedback" class="hidden mt-6 p-4 rounded-xl border-l-4 text-center font-medium fade-in"></div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- RIGHT SIDE: Analysis Panel -->
-    <div class="flex flex-col h-full fade-in" style="animation-delay: 0.2s;">
-        <div id="analysis-panel" class="bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-2xl border border-brand-200 flex flex-col h-full overflow-hidden relative min-h-[600px]">
-            
-            <!-- Header -->
-            <div class="px-6 py-4 border-b border-brand-100 flex justify-between items-center bg-white/50 backdrop-blur-sm flex-shrink-0">
-                <h5 class="font-mono text-brand-600 font-bold uppercase tracking-widest text-sm flex items-center">
-                    <i class="fas fa-microchip mr-2 animate-pulse"></i>SmartGuard Analysis
-                </h5>
-                <span id="panel-status" class="px-2 py-1 bg-slate-200 text-slate-600 text-xs font-bold rounded uppercase">Idle</span>
             </div>
 
-            <!-- Body -->
-            <div class="p-6 lg:p-8 space-y-8 overflow-y-auto flex-grow">
+            <!-- ========================================== -->
+            <!-- STATE 2: LOADING / ANALYZING (view-loading) -->
+            <!-- ========================================== -->
+            <div id="view-loading" class="hidden absolute inset-0 bg-white flex-col items-center justify-center z-20 fade-in">
+                <i class="fas fa-shield-virus fa-spin text-brand-600 text-5xl mb-6"></i>
+                <h3 class="text-2xl font-bold text-slate-800">Inspecting Traffic...</h3>
+                <p class="text-slate-500 text-sm mt-2 font-mono">Routing request through SmartGuard Edge Analysis</p>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- STATE 3: VERDICT RESULT (view-result)      -->
+            <!-- ========================================== -->
+            <div id="view-result" class="hidden w-full max-w-3xl mx-auto py-8 px-6 fade-in flex-grow">
                 
-                <!-- Decision Block -->
-                <div class="text-center relative">
-                    <div class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Final Decision</div>
-                    <h1 id="decision-text" class="text-5xl lg:text-6xl font-black text-slate-200 font-mono tracking-tighter">--</h1>
-                    <p id="decision-reason" class="text-slate-500 mt-2 font-medium">Waiting for request...</p>
-                </div>
+                <!-- Main Verdict Card -->
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-6 relative">
+                    
+                    <!-- Dynamic Header Background -->
+                    <div id="result-header-bg" class="py-10 px-6 text-center relative overflow-hidden">
+                        <!-- Decorative background element -->
+                        <div class="absolute -right-10 -top-10 opacity-10 pointer-events-none">
+                            <i id="result-bg-icon" class="fas fa-shield-alt text-[150px]"></i>
+                        </div>
 
-                <!-- Grid Stats -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="p-4 bg-white/60 rounded-xl border border-brand-100 shadow-sm">
-                        <small class="text-[10px] font-bold text-brand-500 uppercase tracking-wider block mb-2">Request Metrics</small>
-                        <div class="flex justify-between text-sm mb-1"><span class="text-slate-500">Action:</span> <span id="res-action" class="font-bold text-slate-700">-</span></div>
-                        <div class="flex justify-between text-sm mb-1"><span class="text-slate-500">Length:</span> <span id="res-len" class="font-mono text-slate-700">-</span></div>
-                        <div class="flex justify-between text-sm"><span class="text-slate-500">Special Chars:</span> <span id="res-spec" class="font-mono text-slate-700">-</span></div>
+                        <div class="relative z-10 pointer-events-none">
+                            <div id="result-icon-container" class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg border-4 border-white">
+                                <i id="result-icon" class="fas fa-check text-4xl"></i>
+                            </div>
+                            <h2 id="result-title" class="text-3xl font-extrabold text-slate-900 mb-2">Request Cleared</h2>
+                            <p id="result-subtitle" class="text-slate-700 font-medium">SmartGuard structural analysis passed.</p>
+                        </div>
                     </div>
-                    <div class="p-4 bg-white/60 rounded-xl border border-brand-100 shadow-sm">
-                        <small class="text-[10px] font-bold text-orange-500 uppercase tracking-wider block mb-2">Threat Intelligence</small>
-                        <div class="flex justify-between text-sm mb-1"><span class="text-slate-500">Risk:</span> <span id="res-risk" class="font-bold">-</span></div>
-                        <div class="flex justify-between text-sm mb-1"><span class="text-slate-500">Type:</span> <span id="res-type" class="text-xs font-bold text-slate-700 truncate ml-2">-</span></div>
-                        <div class="flex justify-between text-sm"><span class="text-slate-500">Confidence:</span> <span id="res-conf" class="font-mono font-bold">-</span></div>
+                    
+                    <!-- Security Event Summary Grid -->
+                    <div class="bg-slate-50 border-t border-slate-200 px-6 py-5">
+                        <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-200 pb-2">Security Event Summary</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                                <span class="block text-[10px] text-slate-500 uppercase tracking-wide">Target Route</span>
+                                <span id="sum-route" class="font-mono text-sm text-slate-800 font-semibold">-</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-slate-500 uppercase tracking-wide">Decision</span>
+                                <span id="sum-decision" class="font-bold text-sm text-slate-800">-</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-slate-500 uppercase tracking-wide">Attack Family</span>
+                                <span id="sum-family" class="font-bold text-sm text-slate-800">-</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-slate-500 uppercase tracking-wide">Severity</span>
+                                <span id="sum-severity" class="font-bold text-sm text-slate-800">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons - EXPLICIT IDS FOR EVENT LISTENERS -->
+                    <div class="bg-white border-t border-slate-200 p-5 flex flex-col sm:flex-row justify-center gap-4 relative z-20">
+                        <button type="button" id="btn-reset-sim" class="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-all shadow-sm order-1 sm:order-2 cursor-pointer">
+                            <i class="fas fa-redo mr-2"></i> Next Simulation
+                        </button>
+                        <button type="button" id="btn-toggle-details" class="px-6 py-2.5 bg-slate-800 text-white font-bold rounded-lg hover:bg-slate-900 transition-all shadow-sm order-2 sm:order-1 cursor-pointer">
+                            <i class="fas fa-search-chart mr-2"></i> View Threat Analysis Report
+                        </button>
                     </div>
                 </div>
 
-                <!-- Knowledge Base -->
-                <div class="bg-slate-800 rounded-xl p-4 text-white shadow-lg">
-                    <h6 class="text-xs font-bold text-red-400 uppercase tracking-wider mb-2 flex items-center">
-                        <i class="fas fa-book-dead mr-2"></i>Potential Impact
-                    </h6>
-                    <p id="harm-text" class="text-sm text-slate-300 italic leading-relaxed">
-                        Select a scenario to analyze potential system impact.
-                    </p>
-                </div>
+                <!-- COLLAPSIBLE DETAILED ANALYSIS -->
+                <div id="detailed-analysis-section" class="hidden bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden fade-in mt-4">
+                    <div class="bg-slate-900 px-6 py-3 border-b border-slate-800 flex items-center">
+                        <h4 class="text-white font-bold text-sm tracking-wide"><i class="fas fa-microchip mr-2 text-brand-400"></i> SmartGuard Academic Analysis Report</h4>
+                    </div>
+                    
+                    <div class="p-6 space-y-6">
+                        <!-- Security Impact -->
+                        <div>
+                            <h6 class="text-xs font-bold text-slate-800 mb-2 uppercase tracking-wide flex items-center"><i class="fas fa-radiation text-slate-400 mr-2"></i> Threat Impact Assessment</h6>
+                            <p id="det-impact" class="text-sm text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-200 leading-relaxed"></p>
+                        </div>
 
-                <!-- AI Explainability -->
-                <div class="border-t border-brand-100 pt-6">
-                    <h6 class="text-xs font-bold text-brand-600 uppercase tracking-wider mb-3 flex items-center">
-                        <i class="fas fa-project-diagram mr-2"></i>AI Reasoning (LIME)
-                    </h6>
-                    <ul id="lime-features" class="space-y-2 text-sm text-slate-600">
-                        <li class="italic opacity-75">No analysis data available.</li>
-                    </ul>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <!-- AI Reasoning -->
+                            <div>
+                                <h6 class="text-xs font-bold text-slate-800 mb-2 uppercase tracking-wide flex items-center"><i class="fas fa-brain text-slate-400 mr-2"></i> Explainable AI Signals (LIME)</h6>
+                                <ul id="det-lime" class="space-y-2 text-sm text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono min-h-[100px]">
+                                </ul>
+                            </div>
+                            
+                            <!-- Request Metrics -->
+                            <div>
+                                <h6 class="text-xs font-bold text-slate-800 mb-2 uppercase tracking-wide flex items-center"><i class="fas fa-chart-pie text-slate-400 mr-2"></i> Pipeline Metrics</h6>
+                                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-sm space-y-3 min-h-[100px]">
+                                    <div class="flex justify-between border-b border-slate-200 pb-2">
+                                        <span class="text-slate-500">ML Confidence:</span> <span id="det-confidence" class="font-bold text-slate-800">-</span>
+                                    </div>
+                                    <div class="flex justify-between border-b border-slate-200 pb-2">
+                                        <span class="text-slate-500">Payload Size:</span> <span id="det-size" class="font-bold text-slate-800">-</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500">Special Char Count:</span> <span id="det-spec" class="font-bold text-slate-800">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Raw Request -->
+                        <div>
+                            <h6 class="text-xs font-bold text-slate-800 mb-2 uppercase tracking-wide flex items-center"><i class="fas fa-network-wired text-slate-400 mr-2"></i> Captured Request Evidence</h6>
+                            <pre id="det-request" class="bg-slate-900 text-green-400 font-mono text-xs p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner border border-slate-700"></pre>
+                        </div>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-    // Tab Switching Logic (Inline for simplicity given CDN setup)
-    function switchTab(tabId) {
-        // Hide all
-        document.getElementById('tab-login').classList.add('hidden');
-        document.getElementById('tab-search').classList.add('hidden');
-        document.getElementById('tab-comment').classList.add('hidden');
+    let currentMode = 'login';
+    let currentRawRequest = "";
+
+    // 1. Initial Setup
+    document.addEventListener('DOMContentLoaded', function() {
+        switchTab('login');
         
-        // Reset buttons
-        const btns = ['login', 'search', 'comment'];
-        btns.forEach(b => {
+        // Explicitly bind the toggle button
+        const btnToggle = document.getElementById('btn-toggle-details');
+        if (btnToggle) {
+            btnToggle.onclick = toggleDetails;
+        }
+        
+        const btnReset = document.getElementById('btn-reset-sim');
+        if (btnReset) {
+            btnReset.onclick = resetSimulator;
+        }
+    });
+
+    // 2. Tab Switching
+    function switchTab(tabId) {
+        currentMode = tabId;
+        ['login', 'search', 'comment'].forEach(b => {
+            const tab = document.getElementById('tab-' + b);
             const btn = document.getElementById('btn-tab-' + b);
-            btn.className = "whitespace-nowrap px-6 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-slate-700 transition-all";
+            if(tab) tab.classList.add('hidden');
+            if(btn) btn.className = "px-5 py-2 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all bg-transparent";
         });
 
-        // Show active
-        document.getElementById('tab-' + tabId).classList.remove('hidden');
+        const activeTab = document.getElementById('tab-' + tabId);
         const activeBtn = document.getElementById('btn-tab-' + tabId);
-        activeBtn.className = "whitespace-nowrap px-6 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm bg-white text-brand-600 ring-1 ring-slate-200";
+        if(activeTab) activeTab.classList.remove('hidden');
+        if(activeBtn) activeBtn.className = "px-5 py-2 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-brand-600 ring-1 ring-slate-200";
         
-        // Call existing update logic
-        if(window.updateUrl) window.updateUrl(tabId === 'login' ? 'auth' : (tabId === 'comment' ? 'feedback' : 'search'));
+        const routes = {'login': 'auth/login', 'search': 'api/search', 'comment': 'api/feedback'};
+        document.getElementById('url-suffix').innerText = routes[tabId];
+        resetPipeline();
+    }
+
+    // 3. THE FIX: View Threat Analysis Report Toggle
+    function toggleDetails(e) {
+        if (e) e.preventDefault();
+        const section = document.getElementById('detailed-analysis-section');
+        const btn = document.getElementById('btn-toggle-details');
+        
+        if (section.classList.contains('hidden')) {
+            section.classList.remove('hidden');
+            btn.innerHTML = '<i class="fas fa-chevron-up mr-2"></i> Hide Threat Analysis Report';
+            setTimeout(() => { section.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+        } else {
+            section.classList.add('hidden');
+            btn.innerHTML = '<i class="fas fa-search-chart mr-2"></i> View Threat Analysis Report';
+        }
+    }
+
+    function resetSimulator() {
+        document.getElementById('view-result').classList.add('hidden');
+        document.getElementById('detailed-analysis-section').classList.add('hidden');
+        document.getElementById('view-loading').classList.replace('flex', 'hidden');
+        document.getElementById('view-form').classList.remove('hidden');
+        resetPipeline();
+    }
+
+    // 4. UI Update Handlers (Called by main.js)
+    window.updateAnalysisUI_Loading = function() {
+        currentRawRequest = generateRawRequest(); 
+        document.getElementById('view-form').classList.add('hidden');
+        const loading = document.getElementById('view-loading');
+        loading.classList.remove('hidden');
+        loading.classList.add('flex');
+        animatePipelineStart();
+    };
+
+    window.updateAnalysisUI_Result = function(data, action) {
+        animatePipelineResult(data.decision);
+
+        setTimeout(() => {
+            document.getElementById('view-loading').classList.replace('flex', 'hidden');
+            document.getElementById('view-result').classList.remove('hidden');
+            
+            // Header Color Coding
+            const headerBg = document.getElementById('result-header-bg');
+            const iconContainer = document.getElementById('result-icon-container');
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const subtitle = document.getElementById('result-subtitle');
+
+            if (data.decision === 'ACCEPTED') {
+                headerBg.className = "py-10 px-6 text-center relative overflow-hidden bg-green-50 border-b border-green-100";
+                iconContainer.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg border-4 border-white bg-green-500 text-white";
+                icon.className = "fas fa-check text-4xl";
+                title.innerText = "Request Cleared";
+                title.className = "text-3xl font-extrabold text-green-900 mb-2";
+                subtitle.innerText = "Traffic forwarded to application server.";
+            } 
+             else {
+                headerBg.className = "py-10 px-6 text-center relative overflow-hidden bg-red-50 border-b border-red-100";
+                iconContainer.className = "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg border-4 border-white bg-red-600 text-white relative z-10";
+                icon.className = "fas fa-shield-virus text-4xl";
+                title.innerText = "Threat Blocked";
+                title.className = "text-3xl font-extrabold text-red-900 mb-2";
+                subtitle.innerText = "Malicious payload structural intercept active.";
+                }
+            // Map Summary Data
+            document.getElementById('sum-route').innerText = (action === 'Login' ? '/auth/login' : action === 'Search' ? '/api/search' : '/api/feedback');
+            document.getElementById('sum-decision').innerText = data.decision;
+            document.getElementById('sum-family').innerText = data.detected_type;
+            document.getElementById('sum-severity').innerText = data.risk_level;
+            
+            // Details Report
+            document.getElementById('det-confidence').innerText = data.confidence;
+            document.getElementById('det-size').innerText = data.features.length + " Bytes";
+            document.getElementById('det-spec').innerText = data.features.special_chars;
+            document.getElementById('det-impact').innerText = data.harm_text;
+            document.getElementById('det-request').innerText = currentRawRequest;
+
+            // LIME List
+            const limeList = document.getElementById('det-lime');
+            limeList.innerHTML = "";
+            if (data.explanation && data.explanation.length > 0) {
+                data.explanation.forEach(item => {
+                    const isThreat = item[1] > 0;
+                    limeList.innerHTML += `
+                        <li class="flex items-center justify-between p-2 rounded ${isThreat ? 'bg-red-50' : 'bg-green-50'} border border-slate-200 text-xs">
+                            <span class="font-mono text-slate-700">${item[0]}</span>
+                            <span class="font-bold ${isThreat ? 'text-red-600' : 'text-green-600'}">${(isThreat ? '+' : '') + item[1].toFixed(3)}</span>
+                        </li>`;
+                });
+            }
+        }, 1000);
+    };
+
+    // --- Keep your Pipeline Animation Code Below ---
+    function generateRawRequest() {
+        const host = "localhost:5000";
+        const ua = "Mozilla/5.0 (SmartGuard-Client)";
+        if (currentMode === 'login') {
+            const u = document.getElementById('login-user').value;
+            const p = document.getElementById('login-pass').value;
+            return `POST /auth/login HTTP/1.1\nHost: ${host}\nUser-Agent: ${ua}\n\nusername=${u}&password=${p}`;
+        } else if (currentMode === 'search') {
+            const q = document.getElementById('search-query').value;
+            return `GET /api/search?q=${encodeURIComponent(q)} HTTP/1.1\nHost: ${host}\nUser-Agent: ${ua}`;
+        } else {
+            const c = document.getElementById('comment-text').value;
+            return `POST /api/feedback HTTP/1.1\nHost: ${host}\n\n{"message": "${c}"}`;
+        }
+    }
+
+    function resetPipeline() {
+        const nodes = ['browser', 'edge', 'ml', 'decision', 'app'];
+        nodes.forEach(n => document.getElementById(`pipe-${n}`).className = "pipe-node w-8 h-8 rounded-full border-2 flex items-center justify-center mb-1.5 bg-white z-10");
+        [1,2,3,4].forEach(l => document.getElementById(`line-${l}`).className = "pipe-line h-0.5 flex-grow -mx-2 z-0 bg-slate-300");
+        document.getElementById('block-x').classList.add('hidden');
+    }
+
+    function animatePipelineStart() {
+        resetPipeline();
+        document.getElementById('pipe-browser').classList.add('node-active');
+        setTimeout(() => { document.getElementById('line-1').classList.add('active'); document.getElementById('pipe-edge').classList.add('node-active'); }, 200);
+        setTimeout(() => { document.getElementById('line-2').classList.add('active'); document.getElementById('pipe-ml').classList.add('node-active'); }, 400);
+    }
+
+    function animatePipelineResult(decision) {
+        setTimeout(() => {
+            document.getElementById('line-3').classList.add('active');
+            document.getElementById('pipe-decision').classList.add('node-active');
+            setTimeout(() => {
+                if (decision === 'ACCEPTED') {
+                    document.getElementById('line-4').classList.add('safe');
+                    document.getElementById('pipe-app').classList.add('node-safe');
+                    ['browser', 'edge', 'ml', 'decision'].forEach(n => document.getElementById(`pipe-${n}`).classList.add('node-safe'));
+                } else {
+                    document.getElementById('line-4').classList.add('blocked');
+                    document.getElementById('block-x').classList.remove('hidden');
+                    document.getElementById('pipe-app').classList.add('node-blocked');
+                    ['edge', 'ml', 'decision'].forEach(n => document.getElementById(`pipe-${n}`).classList.add('node-blocked'));
+                }
+            }, 300);
+        }, 200);
     }
 </script>
 {% endblock %}

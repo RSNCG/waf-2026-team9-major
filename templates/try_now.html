@@ -415,6 +415,8 @@
             btnReset.onclick = resetSimulator;
         }
 
+        // Extension popup actions are wired via inline onclick handlers in markup
+        // to keep demo interactions explicit and easy to trace in presentations.
         const btnOpenExt = document.getElementById('btn-open-extension');
         const btnCloseExt = document.getElementById('btn-close-extension');
         const btnResetExt = document.getElementById('btn-reset-extension');

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartGuard AI WAF</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7', // Primary Brand Color
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'glow': '0 0 15px rgba(14, 165, 233, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS (Animations & Specific Overrides) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 transition-all duration-300 backdrop-blur-md bg-white/80 border-b border-white/50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="{{ url_for('home') }}" class="flex items-center space-x-2 group">
+                        <i class="fas fa-shield-virus text-2xl text-brand-600 group-hover:scale-110 transition-transform"></i>
+                        <span class="font-bold text-xl tracking-tight text-slate-900">SMART<span class="text-brand-600">GUARD</span></span>
+                    </a>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{{ url_for('home') }}" class="text-slate-600 hover:text-brand-600 font-medium transition-colors">Home</a>
+                    <!-- Changed Methodology to anchor link on Home page -->
+                    <a href="{{ url_for('home') }}#methodology" class="text-slate-600 hover:text-brand-600 font-medium transition-colors">Methodology</a>
+                    <a href="{{ url_for('try_now') }}" class="text-slate-600 hover:text-brand-600 font-medium transition-colors">Live Demo</a>
+                    <a href="{{ url_for('dashboard') }}" class="text-slate-600 hover:text-brand-600 font-medium transition-colors">Dashboard</a>
+                </div>
+
+                <!-- Auth Buttons -->
+                <div class="hidden md:flex items-center space-x-4">
+                    {% if session.get('user_id') %}
+                        <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-2 rounded-full bg-brand-50 text-brand-700 border border-brand-200 hover:bg-brand-100 transition-colors">
+                            <i class="fas fa-user-circle mr-2"></i>
+                            <span class="font-semibold text-sm">{{ session.get('username') }}</span>
+                        </a>
+                        <a href="{{ url_for('logout') }}" class="text-slate-500 hover:text-red-500 transition-colors" title="Logout">
+                            <i class="fas fa-sign-out-alt text-lg"></i>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="px-5 py-2.5 rounded-lg bg-brand-600 text-white font-semibold shadow-lg shadow-brand-500/30 hover:bg-brand-700 hover:shadow-brand-500/50 transition-all transform hover:-translate-y-0.5">
+                            Login / Register
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-12 border-t border-slate-200 bg-white/80 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid md:grid-cols-2 gap-8 items-center border-b border-slate-100 pb-8 mb-8">
+                <div>
+                    <h4 class="text-lg font-bold text-slate-900 mb-2">SmartGuard - AI Powered Firewall for Web Applications</h4>
+                    <p class="text-sm text-slate-500 font-medium">Anurag University</p>
+                    <p class="text-sm text-slate-500">Department of Computer Science and Engineering<br>IV B.Tech II Semester Major Project (Team 9 CSE A)</p>
+                </div>
+                <div class="md:text-right">
+                    <p class="text-xs font-bold text-brand-600 uppercase tracking-wider mb-1">Project Guide</p>
+                    <p class="text-slate-700 font-semibold">Dr. Kamalar Ramineni</p>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <div class="flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-slate-600">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-mono text-brand-600 text-xs font-bold">22EG105A63</span>
+                        <span class="font-semibold">R. Shiva Naga Chander</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-mono text-brand-600 text-xs font-bold">22EG105A54</span>
+                        <span class="font-semibold">S. Dheeraj Sai</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-mono text-brand-600 text-xs font-bold">22EG105A37</span>
+                        <span class="font-semibold">M. Nikhil Reddy</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-mono text-brand-600 text-xs font-bold">22EG105A33</span>
+                        <span class="font-semibold">K. Sai Nikhil Reddy</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

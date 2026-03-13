@@ -154,3 +154,6 @@ function exportTableToCSV(filename) {
     document.body.appendChild(downloadLink);
     downloadLink.click();
 }
+
+// Expose functions to window for HTML onclick handlers
+window.setPayload = setPayload;

@@ -56,9 +56,9 @@ def init_db():
         if 'email' not in user_columns:
             db.execute('ALTER TABLE users ADD COLUMN email TEXT')
 
-        # Demo reset requirement: start each run with a clean users/logs state.
-        db.execute('DELETE FROM logs')
-        db.execute('DELETE FROM users')
+        # # Demo reset requirement: start each run with a clean users/logs state.
+        # db.execute('DELETE FROM logs')
+        # db.execute('DELETE FROM users')
 
         db.commit()
         db.close() # Explicitly close the init connection
@@ -455,4 +455,4 @@ def logout(): session.clear(); return redirect(url_for('home'))
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5002)

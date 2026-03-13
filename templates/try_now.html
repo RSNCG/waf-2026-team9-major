@@ -101,9 +101,6 @@
                     <button type="button" id="btn-close-extension" onclick="toggleExtensionPopup(false)" class="text-slate-300 hover:text-white"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="p-4 space-y-3 text-xs">
-                    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-3 py-2 font-semibold">
-                        DEMO ONLY: Synthetic local simulation. No real browser extension. No real attack/DoS capability.
-                    </div>
 
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Traffic Type</label>
@@ -162,7 +159,7 @@
                 </div>
             </div>
         </div>
-
+         </div>
         <!-- SmartGuard Edge Gateway Banner (Academic Context) -->
         <div class="bg-slate-900 text-cyan-400 text-[10px] font-mono py-1.5 px-6 flex justify-between items-center shadow-inner flex-shrink-0">
             <div class="flex items-center space-x-3">
@@ -196,7 +193,7 @@
                 
                 <div class="flex flex-col items-center w-24">
                     <div id="pipe-decision" class="pipe-node w-8 h-8 rounded-full border-2 flex items-center justify-center mb-1.5 bg-white z-10"><i class="fas fa-filter text-xs"></i></div>
-                    <span>Enforcement</span>
+                    <span>Filtering</span>
                 </div>
                     <div id="line-4" class="pipe-line h-0.5 flex-grow -mx-2 z-0 relative">
                         <div id="block-x" class="absolute inset-0 flex items-center justify-center text-red-500 hidden pointer-events-none"><i class="fas fa-times-circle bg-white rounded-full text-sm shadow-sm"></i></div>
@@ -503,9 +500,9 @@
         const count = Math.min(100, Math.max(1, parseInt(document.getElementById('ext-count').value || '1', 10)));
         const delay = Math.min(5000, Math.max(50, parseInt(document.getElementById('ext-delay').value || '150', 10)));
 
-        const runCount = count;
+        let runCount = count;
         const intensityMultiplier = intensity === 'High' ? 3 : intensity === 'Medium' ? 2 : 1;
-        const runCount = Math.min(100, count * intensityMultiplier);
+        runCount = Math.min(100, count * intensityMultiplier);
 
         const seed = getScenarioPayload(scenario, 1, randomUA);
         switchTab(seed.mode);
@@ -551,15 +548,15 @@
             lastData.explanation = [
                 ['request_rate > threshold', 0.952],
                 ['traffic_pattern indicates automation', 0.901],
-                ['enforcement pipeline blocked request', 0.846]
-            lastData.detected_type = 'Rate Limit Detection (Simulated)';
+                ['Filtering pipeline blocked request', 0.846]
+            ];
             lastData.confidence = '99.00%';
             lastData.risk_level = intensity === 'High' ? 'Critical' : 'High';
-            lastData.harm_text = 'Demo-only synthetic traffic surge detected. SmartGuard simulation applies local rate-limit style blocking in the enforcement stage.';
+            lastData.harm_text = 'Demo-only synthetic traffic surge detected. SmartGuard simulation applies local rate-limit style blocking in the filtering stage.';
             lastData.explanation = [
                 ['synthetic_request_rate > threshold', 0.952],
                 ['traffic_pattern resembles bot/burst', 0.901],
-                ['enforcement policy = local demo rate-limit', 0.846]
+                ['Filtering policy = local demo rate-limit', 0.846]
             ];
             if (lastData.features) {
                 lastData.features.length = runCount;
@@ -620,6 +617,8 @@
         resetPipeline();
     }
 
+    window.switchTab = switchTab;
+
     // 3. THE FIX: View Threat Analysis Report Toggle
     function toggleDetails(e) {
         if (e) e.preventDefault();
@@ -643,6 +642,8 @@
         document.getElementById('view-form').classList.remove('hidden');
         resetPipeline();
     }
+
+    window.resetSimulator = resetSimulator;
 
     // 4. UI Update Handlers (Called by main.js)
     window.updateAnalysisUI_Loading = function() {

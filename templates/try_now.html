@@ -101,6 +101,9 @@
                     <button type="button" id="btn-close-extension" onclick="toggleExtensionPopup(false)" class="text-slate-300 hover:text-white"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="p-4 space-y-3 text-xs">
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-3 py-2 font-semibold">
+                        DEMO ONLY: Synthetic local simulation. No real browser extension. No real attack/DoS capability.
+                    </div>
 
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Traffic Type</label>
@@ -127,6 +130,19 @@
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Request Count</label>
                         <input id="ext-count" type="number" min="1" max="100" value="6" class="w-full border border-slate-300 rounded-md px-2.5 py-2 text-xs">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block font-bold text-slate-600 mb-1">Request Intensity</label>
+                            <select id="ext-intensity" class="w-full border border-slate-300 rounded-md px-2.5 py-2 text-xs">
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option>High</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-600 mb-1">Request Count</label>
+                            <input id="ext-count" type="number" min="1" max="100" value="6" class="w-full border border-slate-300 rounded-md px-2.5 py-2 text-xs">
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
@@ -437,6 +453,15 @@
 
         // Extension popup actions are wired via inline onclick handlers in markup
         // to keep demo interactions explicit and easy to trace in presentations.
+        const btnOpenExt = document.getElementById('btn-open-extension');
+        const btnCloseExt = document.getElementById('btn-close-extension');
+        const btnResetExt = document.getElementById('btn-reset-extension');
+        const btnTriggerExt = document.getElementById('btn-trigger-extension');
+
+        if (btnOpenExt) btnOpenExt.onclick = toggleExtensionPopup;
+        if (btnCloseExt) btnCloseExt.onclick = () => toggleExtensionPopup(false);
+        if (btnResetExt) btnResetExt.onclick = resetExtensionForm;
+        if (btnTriggerExt) btnTriggerExt.onclick = triggerExtensionSimulation;
     });
 
     function toggleExtensionPopup(forceState = null) {
@@ -450,6 +475,7 @@
     function resetExtensionForm() {
         document.getElementById('ext-traffic-type').value = 'Normal User';
         document.getElementById('ext-attack-scenario').value = 'Safe Login';
+        document.getElementById('ext-intensity').value = 'Low';
         document.getElementById('ext-count').value = 6;
         document.getElementById('ext-delay').value = 180;
         document.getElementById('ext-random-ua').checked = false;
@@ -472,11 +498,14 @@
     async function triggerExtensionSimulation() {
         const trafficType = document.getElementById('ext-traffic-type').value;
         const scenario = document.getElementById('ext-attack-scenario').value;
+        const intensity = document.getElementById('ext-intensity').value;
         const randomUA = document.getElementById('ext-random-ua').checked;
         const count = Math.min(100, Math.max(1, parseInt(document.getElementById('ext-count').value || '1', 10)));
         const delay = Math.min(5000, Math.max(50, parseInt(document.getElementById('ext-delay').value || '150', 10)));
 
         const runCount = count;
+        const intensityMultiplier = intensity === 'High' ? 3 : intensity === 'Medium' ? 2 : 1;
+        const runCount = Math.min(100, count * intensityMultiplier);
 
         const seed = getScenarioPayload(scenario, 1, randomUA);
         switchTab(seed.mode);
@@ -523,6 +552,14 @@
                 ['request_rate > threshold', 0.952],
                 ['traffic_pattern indicates automation', 0.901],
                 ['enforcement pipeline blocked request', 0.846]
+            lastData.detected_type = 'Rate Limit Detection (Simulated)';
+            lastData.confidence = '99.00%';
+            lastData.risk_level = intensity === 'High' ? 'Critical' : 'High';
+            lastData.harm_text = 'Demo-only synthetic traffic surge detected. SmartGuard simulation applies local rate-limit style blocking in the enforcement stage.';
+            lastData.explanation = [
+                ['synthetic_request_rate > threshold', 0.952],
+                ['traffic_pattern resembles bot/burst', 0.901],
+                ['enforcement policy = local demo rate-limit', 0.846]
             ];
             if (lastData.features) {
                 lastData.features.length = runCount;
@@ -554,6 +591,8 @@
         }
 
         currentRawRequest = `EXTENSION TRAFFIC SIMULATION\nTraffic Type: ${trafficType}\nScenario: ${scenario}\nRequests Sent: ${runCount}\nDelay: ${delay}ms\nRandomize UA: ${randomUA ? 'ON' : 'OFF'}\nBlocked Responses: ${blockedCount}`;
+        currentRawRequest = `DEMO-ONLY EXTENSION SIMULATION\nTraffic Type: ${trafficType}\nScenario: ${scenario}\nRequests Sent: ${runCount}\nDelay: ${delay}ms\nRandomize UA: ${randomUA ? 'ON' : 'OFF'}\nBlocked Responses: ${blockedCount}`;
+        currentRawRequest = `DEMO-ONLY EXTENSION SIMULATION\nTraffic Type: ${trafficType}\nScenario: ${scenario}\nIntensity: ${intensity}\nRequests Sent: ${runCount}\nDelay: ${delay}ms\nRandomize UA: ${randomUA ? 'ON' : 'OFF'}\nBlocked Responses: ${blockedCount}`;
         window.updateAnalysisUI_Result(lastData, seed.action);
     }
 

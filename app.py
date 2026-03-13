@@ -6,7 +6,7 @@ import re
 import joblib
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timezone
 import lime.lime_tabular
 import warnings
 
@@ -51,6 +51,35 @@ def init_db():
         ''')
         db.commit()
         db.close() # Explicitly close the init connection
+
+
+@app.template_filter('format_log_timestamp')
+def format_log_timestamp(ts_value):
+    """Format DB timestamps consistently for dashboard UI (UTC display)."""
+    if not ts_value:
+        return "-"
+
+    ts_str = str(ts_value).strip()
+    parse_formats = [
+        '%Y-%m-%d %H:%M:%S',
+        '%Y-%m-%d %H:%M:%S.%f',
+        '%Y-%m-%dT%H:%M:%S',
+        '%Y-%m-%dT%H:%M:%S.%f',
+    ]
+
+    parsed = None
+    for fmt in parse_formats:
+        try:
+            parsed = datetime.strptime(ts_str, fmt)
+            break
+        except ValueError:
+            continue
+
+    if parsed is None:
+        return ts_str
+
+    parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.strftime('%d %b %Y, %H:%M:%S UTC')
 
 # --- 2. ML Model Loading ---
 MODEL_DIR = 'models'
@@ -235,7 +264,7 @@ def analyze():
             'features': {'length': 0, 'special_chars': 0, 'sql_keywords': 0}
         }), 500
 
-    data = request.json
+    data = request.get_json(silent=True) or {}
     payload = data.get('payload', '')
     action_type = data.get('action_type', 'Unknown')
     

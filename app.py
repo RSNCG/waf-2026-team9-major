@@ -56,6 +56,10 @@ def init_db():
         if 'email' not in user_columns:
             db.execute('ALTER TABLE users ADD COLUMN email TEXT')
 
+        # Demo reset requirement: start each run with a clean users/logs state.
+        db.execute('DELETE FROM logs')
+        db.execute('DELETE FROM users')
+
         db.commit()
         db.close() # Explicitly close the init connection
 
@@ -227,7 +231,7 @@ def hybrid_decision_engine(ml_pred, ml_conf, payload, raw_features_dict):
     # A. If Rule Based says Attack -> BLOCK (Always trust specific signature if found)
     if rule_verdict != "Normal":
         final_decision = "BLOCKED"
-        final_type = f"{rule_verdict} (Rule-Based)"
+        final_type = rule_verdict
         
     # B. Else If Clean (Strict or Textual) -> ACCEPT (Override ML paranoia)
     elif is_clean_strict or is_clean_text:
@@ -239,7 +243,7 @@ def hybrid_decision_engine(ml_pred, ml_conf, payload, raw_features_dict):
         CONFIDENCE_THRESHOLD = 0.70
         if ml_pred == 1 and ml_conf > CONFIDENCE_THRESHOLD:
             final_decision = "BLOCKED"
-            final_type = "Malicious Request (ML Detected)"
+            final_type = "Malicious Request"
         else:
             final_decision = "ACCEPTED"
             final_type = "Normal"

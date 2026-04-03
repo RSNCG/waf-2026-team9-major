@@ -7,8 +7,8 @@
             <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white text-brand-600 shadow-sm mb-4">
                 <i id="header-icon" class="fas fa-lock text-xl"></i>
             </div>
-            <h2 id="form-title" class="text-2xl font-bold text-slate-900">Access Control</h2>
-            <p id="form-subtitle" class="text-slate-500 text-sm mt-2">Secure Gateway Login</p>
+            <h2 id="form-title" class="text-2xl font-bold text-slate-900">Sign In</h2>
+            <p id="form-subtitle" class="text-slate-500 text-sm mt-2">Login if already registered</p>
         </div>
         
         <div class="p-8">
@@ -94,14 +94,14 @@
         if (type === 'register') {
             document.getElementById('login-form-container').classList.add('hidden');
             document.getElementById('register-form-container').classList.remove('hidden');
-            document.getElementById('form-title').innerText = 'Create Account';
-            document.getElementById('form-subtitle').innerText = 'Register for Secure Gateway';
+            document.getElementById('form-title').innerText = 'Sign Up';
+            document.getElementById('form-subtitle').innerText = 'Register Now to Access SmartGuard';
             document.getElementById('header-icon').className = 'fas fa-user-plus text-xl';
         } else {
             document.getElementById('register-form-container').classList.add('hidden');
             document.getElementById('login-form-container').classList.remove('hidden');
-            document.getElementById('form-title').innerText = 'Access Control';
-            document.getElementById('form-subtitle').innerText = 'Secure Gateway Login';
+            document.getElementById('form-title').innerText = 'Sign In';
+            document.getElementById('form-subtitle').innerText = 'Login if already registered';
             document.getElementById('header-icon').className = 'fas fa-lock text-xl';
         }
     }
